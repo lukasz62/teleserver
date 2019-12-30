@@ -2,6 +2,7 @@ from __future__ import print_function
 import pickle
 import os.path
 import yaml
+import datetime
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -41,7 +42,7 @@ def initializeCalendar():
     return CAL
 
 
-def sendToGoogleCalendar(start_date, end_date, hours, minutes, event_title):
+def sendToGoogleCalendar(start_date, end_date, hours, minutes, event_title, CAL):
     """
     Send an event to Google Calendar using Calendar API.
     :param start_date: Start date of an event
@@ -53,7 +54,7 @@ def sendToGoogleCalendar(start_date, end_date, hours, minutes, event_title):
     :rtype: Boolean
     """
     try:
-        CAL = initializeCalendar()
+        #CAL = initializeCalendar()
         # Call the Calendar API
         GMT_OFF = '+01:00'
         EVENT = {
@@ -83,8 +84,44 @@ def calendar_config():
             iframe = content['calendar'].get('iframe', None)
             api_credentials = content['calendar'].get('api_credentials', None)
             calendarID = content['calendar'].get('calendarID', None)
-            return iframe, api_credentials, calendarID
+            desks = content['calendar'].get('desks', None)
+            return iframe, api_credentials, calendarID, desks
         else:
-            return 3*[None]
+            return 4*[None]
     else:
-        return 3*[None]
+        return 4*[None]
+
+
+def desk_combobox():
+    result_config = calendar_config()
+    options = []
+    for x in range(int(result_config[3])):
+        options.append({'label': 'Desk {}'.format(x+1), 'value': 'Desk {}'.format(x+1)})
+    return options
+
+
+def desk_available(CAL, desk_number, desk_reservations):
+    page_token = None
+    result = calendar_config()
+    time_min = datetime.datetime.now() - datetime.timedelta(days=5)
+    time_min = time_min.strftime('%Y-%m-%dT%H:%M:%S+01:00')
+    while True:
+        events = CAL.events().list(calendarId=result[2], pageToken=page_token, timeMin=time_min).execute()
+        for event in events['items']:
+            title = str(event['summary']).split()
+            event_id = str(event['id'])
+            #Desk number taken from event title
+            table_index = int(title[1])-1
+            start_time = str(event['start']['dateTime']).split('+')
+            end_time = str(event['end']['dateTime']).split('+')
+            #Start time and date of an event
+            start_time = datetime.datetime.strptime(start_time[0], '%Y-%m-%dT%H:%M:%S')
+            #End time and date of an event
+            end_time = datetime.datetime.strptime(end_time[0], '%Y-%m-%dT%H:%M:%S')
+            now = datetime.datetime.now()
+            if now >= start_time and now <= end_time and desk_reservations[table_index] == 1  and title[1]==desk_number:
+                return False
+        page_token = events.get('nextPageToken')
+        if not page_token:
+            break
+    return True
