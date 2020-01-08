@@ -1,6 +1,5 @@
 from __future__ import print_function
 import pickle
-import os.path
 import yaml
 import datetime
 from googleapiclient.discovery import build
@@ -13,16 +12,15 @@ SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 
 def initializeCalendar():
-    """Shows basic usage of the Google Calendar API.
-    Prints the start and name of the next 10 events on the user's calendar.
-    :return: connection to a Google Calendar
+    """Initialize a Google Calendar API
+    :return: Connection to Calendar
     :rtype: googleapiclient.discovery.Resource
     """
     creds = None
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    if os.path.exists('token.pickle'):
+    if path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
             creds = pickle.load(token)
     # If there are no (valid) credentials available, let the user log in.
@@ -54,7 +52,6 @@ def sendToGoogleCalendar(start_date, end_date, hours, minutes, event_title, CAL)
     :rtype: Boolean
     """
     try:
-        #CAL = initializeCalendar()
         # Call the Calendar API
         GMT_OFF = '+01:00'
         EVENT = {
@@ -93,6 +90,12 @@ def calendar_config():
 
 
 def desk_combobox():
+    '''
+    Add labels to combobox dynamically due to number of desks
+    in config.yml file
+    :return: List with labels
+    :rtype: List
+    '''
     result_config = calendar_config()
     options = []
     for x in range(int(result_config[3])):
@@ -101,6 +104,12 @@ def desk_combobox():
 
 
 def desk_available(CAL, desk_number, desk_reservations):
+    '''
+    Check if chosen desk is available due to list with reserved desks
+    and calendar
+    :return: Boolean with information of desk availability
+    :rtype: Boolean
+    '''
     page_token = None
     result = calendar_config()
     time_min = datetime.datetime.now() - datetime.timedelta(days=5)
@@ -109,17 +118,17 @@ def desk_available(CAL, desk_number, desk_reservations):
         events = CAL.events().list(calendarId=result[2], pageToken=page_token, timeMin=time_min).execute()
         for event in events['items']:
             title = str(event['summary']).split()
-            event_id = str(event['id'])
-            #Desk number taken from event title
+            # Desk number taken from event title
             table_index = int(title[1])-1
             start_time = str(event['start']['dateTime']).split('+')
             end_time = str(event['end']['dateTime']).split('+')
-            #Start time and date of an event
+            # Start time and date of an event
             start_time = datetime.datetime.strptime(start_time[0], '%Y-%m-%dT%H:%M:%S')
-            #End time and date of an event
+            # End time and date of an event
             end_time = datetime.datetime.strptime(end_time[0], '%Y-%m-%dT%H:%M:%S')
             now = datetime.datetime.now()
-            if now >= start_time and now <= end_time and desk_reservations[table_index] == 1  and title[1]==desk_number:
+            if now >= start_time and now <= end_time \
+               and desk_reservations[table_index] == 1 and title[1] == desk_number:
                 return False
         page_token = events.get('nextPageToken')
         if not page_token:

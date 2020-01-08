@@ -393,13 +393,13 @@ def GUI_generate_service_principal(clicks):
 def pick_datetime(clicks, start_date, end_date, hours, minutes, title):
     if title is not None:
         title_new = str(title).split()
-        if start_date is not None and end_date is not None:
+        if start_date and end_date:
             start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
             end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d').date()
             if clicks != 0:
                 CAL = initializeCalendar()
                 print('After initialization')
-                if desk_available(CAL, title_new[1], desk_reservations) == False:
+                if not desk_available(CAL, title_new[1], desk_reservations):
                     return False, False, True
                     print('After desk_available')
                 result = sendToGoogleCalendar(start_date, end_date, hours, minutes, title, CAL)

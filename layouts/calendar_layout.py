@@ -34,9 +34,9 @@ def change_calendar_content():
             ),
             html.H4('Event title'),
             dcc.Dropdown(
-                id = 'desk-choose',
-                options = desk_combobox(),
-                searchable = False,
+                id='desk-choose',
+                options=desk_combobox(),
+                searchable=False,
             ),
             html.H4('Choose a date of a reservation'),
             html.Div([
